@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator } from 'react-native';
+import { View, FlatList, ActivityIndicator } from 'react-native';
+import { Text, Card } from 'react-native-elements';
+import { Provider as PaperProvider, Appbar } from 'react-native-paper';
 
 const App = () => {
   const [students, setStudents] = useState([]);
@@ -9,8 +11,7 @@ const App = () => {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const response = await fetch('http://192.168.1.7:3000/api/students');
-        if (!response.ok) throw new Error('Network response was not ok');
+        const response = await fetch('http://192.168.1.37:3000/api/students');
         const data = await response.json();
         setStudents(data);
       } catch (error) {
@@ -23,22 +24,54 @@ const App = () => {
     fetchStudents();
   }, []);
 
-  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
-  if (error) return <Text>Error: {error.message}</Text>;
-  if (!students.length) return <Text>Không có dữ liệu học sinh</Text>;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="blue" />
+        <Text>Đang tải dữ liệu...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: 'red' }}>Lỗi: {error.message}</Text>
+      </View>
+    );
+  }
+
+  if (!students.length) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Không có dữ liệu học sinh</Text>
+      </View>
+    );
+  }
 
   return (
-    <FlatList
-      data={students}
-      keyExtractor={(item) => item.m_id ? item.m_id.toString() : 'unknown'}
-      renderItem={({ item }) => (
-        <View>
-          {Object.entries(item).map(([key, value]) => (
-            <Text key={key}>{key}: {value}</Text>
-          ))}
-        </View>
-      )}
-    />
+    <PaperProvider>
+      <Appbar.Header>
+        <Appbar.Content title="Danh Sách Học Sinh" />
+      </Appbar.Header>
+      <FlatList
+        data={students}
+        keyExtractor={(item) => item.m_id.toString()}
+        renderItem={({ item }) => {
+          // Determine gender text
+          const genderText = item.m_gender === 'M' ? 'Nam' : 'Nữ';
+
+          return (
+            <Card containerStyle={{ borderRadius: 10 }}>
+              <Card.Title>{item.m_name}</Card.Title>
+              <Card.Divider />
+              <Text>ID: {item.m_id}</Text>
+              <Text>Giới tính: {genderText}</Text>
+            </Card>
+          );
+        }}
+      />
+    </PaperProvider>
   );
 };
 
